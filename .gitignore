@@ -1,0 +1,4 @@
+api/wallet/
+node_modules/
+api/node_modules/
+chaincode/node_modules/
