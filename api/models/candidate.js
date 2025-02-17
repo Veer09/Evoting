@@ -1,13 +1,38 @@
-class Candidate{
-    constructor(candidateId, name, party, phoneNumber, area, city, email){
-        this.candidateId = candidateId;
-        this.name = name;
-        this.party = party;
-        this.phoneNumber = phoneNumber;
-        this.area = area;
-        this.city = city;
-        this.email = email;
-    }
-}
+const mongoose = require('mongoose');
 
-module.exports = Candidate;
+const Candidate = new mongoose.Schema({
+    name:{
+        type: String,
+        required: true
+    }, 
+    party:{
+        type: String,
+        required: true
+    },
+    phoneNumber:{
+        type: String,
+        required: true
+    },
+    area:{
+        type: String,
+        required: true
+    },
+    city:{
+        type: String,
+        required: true
+    },
+    email:{
+        type: String,
+        required: true
+    },
+    state : {
+        type: String,
+        required: true
+    },
+    country:{
+        type: String,
+        required: true
+    }
+});
+
+module.exports = mongoose.model('Candidate', Candidate,'Candidate');
