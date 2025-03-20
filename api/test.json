@@ -1,0 +1,12 @@
+{
+  "_id": { "$oid": "67b333cc5ea073c5af058bd6" },
+  "name": "Amit Kumar",
+  "party": "National Party",
+  "phoneNumber": "+91 9876543210",
+  "area": "Andheri",
+  "city": "Mumbai",
+  "email": "amitkumar123@gmail.com",
+  "state": "Maharashtra",
+  "country": "India",
+  "__v": { "$numberInt": "0" }
+}

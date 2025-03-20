@@ -32,6 +32,15 @@ const Candidate = new mongoose.Schema({
     country:{
         type: String,
         required: true
+    },
+    description:{
+        type: String,
+        required: true
+    },
+    electionId:{
+        ref: 'Election',
+        type: mongoose.Schema.Types.ObjectId,
+        required: true
     }
 });
 
