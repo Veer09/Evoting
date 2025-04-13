@@ -23,8 +23,7 @@ export default function CreateElectionPage() {
     title: "",
     description: "",
     startDate: undefined,
-    endDate: undefined,
-    area: ""
+    endDate: undefined
   })
 
   const handleChange = (e: any) => {
@@ -133,16 +132,6 @@ export default function CreateElectionPage() {
                   placeholder="Enter election description" 
                   className="min-h-[100px]" 
                   value={formData.description}
-                  onChange={handleChange}
-                  required 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="area">Electoral Area</Label>
-                <Textarea 
-                  id="area"
-                  placeholder="Enter electoral area"
-                  value={formData.area}
                   onChange={handleChange}
                   required 
                 />

@@ -10,17 +10,19 @@ const mongoose = require("./database");
 const { generateToken, verifyToken } = require("./token.js");
 const cookieParser = require("cookie-parser");
 const CommitteeMember = require("./models/committeeMember.js");
-const otpService = require('./otpService');
-const cors = require('cors');
-const Election = require('./models/election.js');
+const otpService = require("./otpService");
+const cors = require("cors");
+const Election = require("./models/election.js");
 
 const app = express();
 
-app.use(cors({
-  origin: 'http://localhost:3001',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],         
-  credentials: true                 
-}));
+app.use(
+  cors({
+    origin: "http://localhost:3001",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
 
 app.use(cookieParser());
 app.use(express.json());
@@ -62,7 +64,7 @@ app.get("/verifyToken", (req, res) => {
 
     let userType = null;
     let userId = null;
-    
+
     if (payload.voterId) {
       userType = "voter";
       userId = payload.voterId;
@@ -70,16 +72,16 @@ app.get("/verifyToken", (req, res) => {
       userType = "electionCommittee";
       userId = payload.committeeMemberId;
     }
-    
+
     if (!userType) {
       return res.status(401).json({ error: "Invalid token" });
     }
-    
-    res.status(200).json({ 
+
+    res.status(200).json({
       user: {
         id: userId,
-        role: userType
-      }
+        role: userType,
+      },
     });
   } catch (err) {
     res.status(401).json({ error: "Invalid token" });
@@ -87,7 +89,7 @@ app.get("/verifyToken", (req, res) => {
 });
 
 app.post("/loginUser", async (req, res) => {
-  const { voterId , otp} = req.body;
+  const { voterId, otp } = req.body;
   try {
     console.log(voterId);
     const otpVerification = otpService.verifyOTP(voterId, otp);
@@ -105,7 +107,7 @@ app.post("/loginUser", async (req, res) => {
     const voterExists = await wallet.get(voterId);
 
     if (voterExists) {
-      const token = generateToken({ voterId});
+      const token = generateToken({ voterId });
       res.cookie("token", token, {
         maxAge: 24 * 60 * 60 * 1000,
         httpOnly: true,
@@ -126,7 +128,7 @@ app.post("/loginUser", async (req, res) => {
       .getProviderRegistry()
       .getProvider(adminIdentity.type);
     const adminUser = await provider.getUserContext(adminIdentity, "admin");
-
+    console.log(adminUser);
     const secret = await caClient.register(
       {
         affiliation: "",
@@ -135,7 +137,7 @@ app.post("/loginUser", async (req, res) => {
       },
       adminUser
     );
-
+    console.log("hi2");
     const enrollment = await caClient.enroll({
       enrollmentID: voterId,
       enrollmentSecret: secret,
@@ -155,12 +157,9 @@ app.post("/loginUser", async (req, res) => {
     const network = await gateway.getNetwork("mychannel");
     const contract = network.getContract("voting");
 
-    const response = await contract.submitTransaction(
-      "registerUser",
-      voterId
-    );
+    const response = await contract.submitTransaction("registerUser", voterId);
     console.log(response);
-    const token = generateToken({ voterId});
+    const token = generateToken({ voterId });
     res.cookie("token", token, {
       maxAge: 24 * 60 * 60 * 1000,
       httpOnly: true,
@@ -176,8 +175,18 @@ app.post("/loginUser", async (req, res) => {
 });
 
 app.post("/addCandidate", async (req, res) => {
-  const { name, party, phoneNumber, area, city, email, state, country, description , electionId} =
-    req.body;
+  const {
+    name,
+    party,
+    phoneNumber,
+    area,
+    city,
+    email,
+    state,
+    country,
+    description,
+    electionId,
+  } = req.body;
   try {
     const token = req.cookies.token;
     const payload = verifyToken(token);
@@ -193,11 +202,9 @@ app.post("/addCandidate", async (req, res) => {
     const committeeIdentity = await wallet.get(committeeMemberId);
 
     if (!committeeIdentity) {
-      return res
-        .status(403)
-        .json({
-          error: `Election committee identity ${committeeMemberId} not found`,
-        });
+      return res.status(403).json({
+        error: `Election committee identity ${committeeMemberId} not found`,
+      });
     }
 
     const gateway = new Gateway();
@@ -222,9 +229,9 @@ app.post("/addCandidate", async (req, res) => {
 
     const newCandidate = await Candidate.create({
       name,
-      party : upParty,
+      party: upParty,
       phoneNumber,
-      area : upArea,
+      area: upArea,
       city,
       email,
       state,
@@ -265,15 +272,15 @@ app.post("/addCandidate", async (req, res) => {
     const response = await contract.submitTransaction(
       "addCandidate",
       candidateId,
-      electionId,
+      electionId
     );
 
     res.status(200).json({ message: response.toString() });
   } catch (err) {
+    console.log(err);
     res.status(500).json({ error: err.message });
   }
 });
-
 
 app.get("/getCandidates", async (req, res) => {
   try {
@@ -285,7 +292,7 @@ app.get("/getCandidates", async (req, res) => {
       return res.status(403).json({ error: "Voter not found" });
     }
     const area = voter.area;
-    const candidates = await Candidate.find({ area },"name party");
+    const candidates = await Candidate.find({ area }, "name party");
     res.status(200).json({ candidates });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -309,7 +316,7 @@ app.get("/auditElection/:id", async (req, res) => {
     if (!election) {
       return res.status(404).json({ error: "Election not found" });
     }
-    if(election.endDate < Date.now()){
+    if (election.endDate < Date.now()) {
       return res.status(403).json({ error: "Election has not ended yet" });
     }
 
@@ -317,11 +324,9 @@ app.get("/auditElection/:id", async (req, res) => {
     const committeeIdentity = await wallet.get(committeeMemberId);
 
     if (!committeeIdentity) {
-      return res
-        .status(403)
-        .json({
-          error: `Election committee identity ${committeeMemberId} not found`,
-        });
+      return res.status(403).json({
+        error: `Election committee identity ${committeeMemberId} not found`,
+      });
     }
 
     const gateway = new Gateway();
@@ -351,9 +356,13 @@ app.post("/loginElectionCommittee", async (req, res) => {
       return res.status(401).json({ error: otpVerification.message });
     }
 
-    const committeeMember = await CommitteeMember.findOne({ committeeMemberId: committeeMemberId });
+    const committeeMember = await CommitteeMember.findOne({
+      committeeMemberId: committeeMemberId,
+    });
     if (!committeeMember) {
-      return res.status(404).json({ error: "Election committee member not found" });
+      return res
+        .status(404)
+        .json({ error: "Election committee member not found" });
     }
 
     const walletPath = path.join(__dirname, "wallet");
@@ -376,7 +385,9 @@ app.post("/loginElectionCommittee", async (req, res) => {
       return res.status(403).json({ error: "Admin identity not found" });
     }
 
-    const provider = wallet.getProviderRegistry().getProvider(adminIdentity.type);
+    const provider = wallet
+      .getProviderRegistry()
+      .getProvider(adminIdentity.type);
     const adminUser = await provider.getUserContext(adminIdentity, "admin2");
 
     const caInfo = ccp2.certificateAuthorities["ca.org2.example.com"];
@@ -420,17 +431,19 @@ app.post("/loginElectionCommittee", async (req, res) => {
       sameSite: "Strict",
     });
 
-    res.status(200).json({ message: `Election committee member logged in successfully with OTP verification` });
+    res.status(200).json({
+      message: `Election committee member logged in successfully with OTP verification`,
+    });
   } catch (err) {
+    console.log(err);
     res.status(500).json({ error: err.message });
   }
 });
 
-
 app.post("/requestOTP", async (req, res) => {
-  console.log('here');
+  console.log("here");
   const { voterId } = req.body;
-  
+
   try {
     const voter = await Voter.findOne({ voterId });
     if (!voter) {
@@ -439,9 +452,9 @@ app.post("/requestOTP", async (req, res) => {
 
     const otp = otpService.generateOTP();
     otpService.storeOTP(voterId, otp);
-   
+
     let emailResult = { success: false };
-    
+
     if (voter.email) {
       emailResult = await otpService.sendOTPByEmail(voter.email, otp);
     }
@@ -464,10 +477,12 @@ app.post("/requestOTP", async (req, res) => {
 });
 
 app.post("/requestCommitteeOTP", async (req, res) => {
-  console.log('here');
+  console.log("here");
   const { committeeMemberId } = req.body;
   try {
-    const committeeMember = await CommitteeMember.findOne({ committeeMemberId});
+    const committeeMember = await CommitteeMember.findOne({
+      committeeMemberId,
+    });
     if (!committeeMember) {
       return res.status(404).json({ error: "Committee member not found" });
     }
@@ -500,10 +515,10 @@ app.post("/requestCommitteeOTP", async (req, res) => {
 
 app.post("/logout", (req, res) => {
   try {
-    res.clearCookie("token", { 
-      httpOnly: true, 
-      secure: false, 
-      sameSite: "Strict" 
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: false,
+      sameSite: "Strict",
     });
     res.status(200).json({ message: "Logged out successfully" });
   } catch (err) {
@@ -528,7 +543,7 @@ app.get("/currentElection", async (req, res) => {
 
     const candidateCount = await Candidate.countDocuments({});
 
-    res.status(200).json({ 
+    res.status(200).json({
       election: {
         id: election._id,
         title: election.title,
@@ -537,24 +552,18 @@ app.get("/currentElection", async (req, res) => {
         endDate: election.endDate,
         status: election.status,
         candidateCount: candidateCount,
-      }
+      },
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-
-
 app.get("/elections", async (req, res) => {
   try {
     const token = req.cookies.token;
     const payload = verifyToken(token);
 
-    if (!payload.committeeMemberId) {
-      return res.status(403).json({ error: "Access denied" });
-    }
-    
     const elections = await Election.find({});
     res.status(200).json({ elections });
   } catch (err) {
@@ -562,13 +571,35 @@ app.get("/elections", async (req, res) => {
   }
 });
 
-app.post("/elections", async (req, res) => {
+app.get("/elections/:id", async (req, res) => {
   try {
-    const { title, description, startDate, endDate} = req.body;
-    
+    const { id } = req.params;
     const token = req.cookies.token;
     const payload = verifyToken(token);
+    const election = await Election.findById(id);
 
+    const candidates = await Candidate.find({ electionId: id }).lean();
+    if (!election) {
+      return res.status(404).json({ error: "Election not found" });
+    }
+    res.status(200).json({ election, candidates });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/elections", async (req, res) => {
+  try {
+    const { title, description, startDate, endDate } = req.body;
+    const token = req.cookies.token;
+    const payload = verifyToken(token);
+    const wallet = await Wallets.newFileSystemWallet(walletPath);
+    const committeeIdentity = await wallet.get(payload.committeeMemberId);
+    if (!committeeIdentity) {
+      return res.status(403).json({
+        error: `Election committee identity ${payload.committeeMemberId} not found`,
+      });
+    }
     if (!payload.committeeMemberId) {
       return res.status(403).json({ error: "Access denied" });
     }
@@ -578,36 +609,58 @@ app.post("/elections", async (req, res) => {
       description,
       startDate: new Date(startDate),
       endDate: new Date(endDate),
-      status: 'pending'
+      status: "pending",
     });
-    
+
+    const committeeMemberId = payload.committeeMemberId;
+    const committeeMember = await CommitteeMember.findOne({
+      committeeMemberId,
+    });
+    if (!committeeMember) {
+      return res
+        .status(403)
+        .json({ error: "Election committee member not found" });
+    }
+    const gateway = new Gateway();
+    await gateway.connect(ccp2, {
+      wallet,
+      identity: committeeIdentity,
+      discovery: { enabled: true, asLocalhost: true },
+    });
+
+    const network = await gateway.getNetwork("mychannel");
+    const contract = network.getContract("voting");
+    const response = await contract.submitTransaction(
+      "addElection",
+      election._id
+    );
+
     await election.save();
-    
-    res.status(201).json({ 
-      message: "Election created successfully", 
-      election 
+
+    res.status(201).json({
+      message: "Election created successfully",
+      election,
     });
   } catch (err) {
+    console.log(err);
     res.status(500).json({ error: err.message });
   }
 });
 app.get("/checkStatus", async (req, res) => {
   try {
-    const elections = await Election.find({ status: 'active' || 'pending' });
+    const elections = await Election.find({ status: "active" || "pending" });
     elections.map(async (election) => {
       if (election.startDate <= Date.now()) {
-        election.status = 'active';
+        election.status = "active";
         await election.save();
       }
       if (election.endDate < Date.now()) {
-        election.status = 'completed';
+        election.status = "completed";
         await election.save();
       }
-    }
-    );
+    });
     return res.status(200).json({ message: "Status updated successfully" });
-  }
-  catch(e){
+  } catch (e) {
     console.log("Error in fetching data");
     return res.status(500).json({ error: "Error in fetching data" });
   }
@@ -616,17 +669,19 @@ app.put("/elections/:id/status", async (req, res) => {
   try {
     const { status } = req.body;
     const { id } = req.params;
-    
+
     const token = req.cookies.token;
     const payload = verifyToken(token);
-    
+
     if (!payload.committeeMemberId) {
       return res.status(403).json({ error: "Access denied" });
     }
-    
-    const isActive = await Election.exists({ status: 'active' });
-    if (status === 'active' && isActive) {
-      return res.status(400).json({ error: "Another election is already active" });
+
+    const isActive = await Election.exists({ status: "active" });
+    if (status === "active" && isActive) {
+      return res
+        .status(400)
+        .json({ error: "Another election is already active" });
     }
     const election = await Election.findById(id);
     if (!election) {
@@ -635,10 +690,10 @@ app.put("/elections/:id/status", async (req, res) => {
 
     election.status = status;
     await election.save();
-    
-    res.status(200).json({ 
-      message: "Election status updated successfully", 
-      election 
+
+    res.status(200).json({
+      message: "Election status updated successfully",
+      election,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -649,52 +704,176 @@ app.get("/activeElections", async (req, res) => {
   try {
     const token = req.cookies.token;
     const payload = verifyToken(token);
-    
+
     if (!payload.voterId) {
       return res.status(403).json({ error: "Access denied" });
     }
-    
+
     const voter = await Voter.findOne({ voterId: payload.voterId });
     if (!voter) {
       return res.status(404).json({ error: "Voter not found" });
     }
 
-    const elections = await Election.find({ 
-      status: 'active',
-      area: voter.area
+    const elections = await Election.find({
+      status: "active",
+      area: voter.area,
     });
 
-    const electionData = await Promise.all(elections.map(async (election) => {
-      const candidateCount = await Candidate.countDocuments({ area: election.area });
-      
-      return {
-        id: election._id,
-        title: election.title,
-        description: election.description,
-        startDate: election.startDate,
-        endDate: election.endDate,
-        area: election.area,
-        candidateCount
-      };
-    }));
-    
+    const electionData = await Promise.all(
+      elections.map(async (election) => {
+        const candidateCount = await Candidate.countDocuments({
+          area: election.area,
+        });
+
+        return {
+          id: election._id,
+          title: election.title,
+          description: election.description,
+          startDate: election.startDate,
+          endDate: election.endDate,
+          area: election.area,
+          candidateCount,
+        };
+      })
+    );
+
     res.status(200).json({ elections: electionData });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+app.get("/electionsForVoters/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const token = req.cookies.token;
+    const payload = verifyToken(token);
+
+    if (!payload.voterId) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+    const area = payload.area;
+    const election = await Election.findOne({ id, area });
+    const candidate = await Candidate.find({ area });
+    if (!election) {
+      return res.status(404).json({ error: "Election not found" });
+    }
+    res.status(200).json({
+      election: {
+        id: election._id,
+        title: election.title,
+        description: election.description,
+        startDate: election.startDate,
+        endDate: election.endDate,
+        status: election.status,
+      },
+      candidates: candidate.map((c) => ({
+        id: c._id,
+        name: c.name,
+        party: c.party,
+        description: c.description,
+      })),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+app.get("/results/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const token = req.cookies.token;
+
+    const payload = verifyToken(token);
+    let uid = payload.voterId ?? payload.committeeMemberId;
+    if (!uid) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+    const wallet = await Wallets.newFileSystemWallet(walletPath);
+    const identity = await wallet.get(uid);
+    if (!identity) {
+      return res.status(403).json({ error: "Identity not found" });
+    }
+    const areas = await Candidate.find({ electionId: id }, { area: 1, _id: 0 });
+    const uniqueList = [...new Set(areas)];
+    const gateway = new Gateway();
+    if (payload.voterId) {
+      await gateway.connect(ccp, {
+        wallet,
+        identity: uid,
+        discovery: { enabled: true, asLocalhost: true },
+      });
+    } else {
+      await gateway.connect(ccp2, {
+        wallet,
+        identity: uid,
+        discovery: { enabled: true, asLocalhost: true },
+      });
+    }
+    const network = await gateway.getNetwork("mychannel");
+    const contract = network.getContract("voting");
+    const response = await contract.evaluateTransaction("getTotalVoters", id);
+    res.status(200).json({ results: JSON.parse(response), areas: uniqueList });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/getResultsByArea/:id", async (req, res) => {
+  try {
+    const { area } = req.body;
+    const { id } = req.params;
+    const token = req.cookies.token;
+    const payload = verifyToken(token);
+    let uid = payload.voterId ?? payload.committeeMemberId;
+    if (!uid) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+    const wallet = await Wallets.newFileSystemWallet(walletPath);
+    const identity = await wallet.get(uid);
+    if (!identity) {
+      return res.status(403).json({ error: "Identity not found" });
+    }
+    const gateway = new Gateway();
+    if (payload.voterId) {
+      await gateway.connect(ccp, {
+        wallet,
+        identity: uid,
+        discovery: { enabled: true, asLocalhost: true },
+      });
+    } else {
+      await gateway.connect(ccp2, {
+        wallet,
+        identity: uid,
+        discovery: { enabled: true, asLocalhost: true },
+      });
+    }
+    const network = await gateway.getNetwork("mychannel");
+    const contract = network.getContract("voting");
+    const candidates = await Candidate.find(
+      { area, electionId: id },
+      { _id: 1 }
+    );
+    const response = await contract.evaluateTransaction(
+      "getResultsByArea",
+      id,
+      candidates
+    );
+    res.status(200).json({ results: JSON.parse(response) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 app.get("/elections/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const token = req.cookies.token;
     console.log(token);
     const payload = verifyToken(token);
-    
+
     if (!payload.voterId && !payload.committeeMemberId) {
       return res.status(403).json({ error: "Access denied" });
     }
-    
+
     const election = await Election.findById(id);
     if (!election) {
       return res.status(404).json({ error: "Election not found" });
@@ -706,8 +885,8 @@ app.get("/elections/:id", async (req, res) => {
     const area = voter.area;
 
     const candidates = await Candidate.find({ area });
-    
-    res.status(200).json({ 
+
+    res.status(200).json({
       election: {
         id: election._id,
         title: election.title,
@@ -717,12 +896,12 @@ app.get("/elections/:id", async (req, res) => {
         status: election.status,
         area: election.area,
       },
-      candidates: candidates.map(c => ({
+      candidates: candidates.map((c) => ({
         id: c._id,
         name: c.name,
         party: c.party,
-        description: c.description
-      }))
+        description: c.description,
+      })),
     });
   } catch (err) {
     console.log(err);
@@ -735,23 +914,23 @@ app.get("/candidates/:id", async (req, res) => {
     const { id } = req.params;
     const token = req.cookies.token;
     const payload = verifyToken(token);
-    
+
     if (!payload.voterId && !payload.committeeMemberId) {
       return res.status(403).json({ error: "Access denied" });
     }
-    
+
     const candidate = await Candidate.findById(id);
     if (!candidate) {
       return res.status(404).json({ error: "Candidate not found" });
     }
-    
-    res.status(200).json({ 
+
+    res.status(200).json({
       candidate: {
         id: candidate._id,
         name: candidate.name,
         party: candidate.party,
-        description: candidate.description
-      }
+        description: candidate.description,
+      },
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -769,15 +948,15 @@ app.post("/castVote", async (req, res) => {
     if (!voter) {
       return res.status(403).json({ error: "Voter not found" });
     }
-    const candidate = await Candidate.findOne({ _id : candidateId });
+    const candidate = await Candidate.findOne({ _id: candidateId });
     if (!candidate) {
       return res.status(403).json({ error: "Candidate not found" });
     }
-    const election = await Election.findOne({ _id : electionId });
+    const election = await Election.findOne({ _id: electionId });
     if (!election) {
       return res.status(403).json({ error: "Election not found" });
     }
-    if(election.status !== 'active'){
+    if (election.status !== "active") {
       return res.status(403).json({ error: "Election is not active" });
     }
     const varea = voter.area;
@@ -804,7 +983,7 @@ app.post("/castVote", async (req, res) => {
     });
     const network = await gateway.getNetwork("mychannel");
     const contract = network.getContract("voting");
-    console.log('before');
+    console.log("before");
     const userId = parseInt(voterId);
     const response = await contract.submitTransaction(
       "castVote",
@@ -812,7 +991,7 @@ app.post("/castVote", async (req, res) => {
       candidateId,
       electionId
     );
-    console.log('after');
+    console.log("after");
     res.status(200).json({ message: response.toString() });
   } catch (err) {
     res.status(500).json({ error: err.message });

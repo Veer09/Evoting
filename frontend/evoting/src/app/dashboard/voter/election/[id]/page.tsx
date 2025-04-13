@@ -30,7 +30,6 @@ interface Candidate {
   id: string;
   name: string;
   party: string;
-  position: string;
   description: string;
 }
 
@@ -47,14 +46,14 @@ interface ElectionPageProps {
 
 function transformElectionData(data: any): ElectionResponse {
   const election: Election = {
-    id: data.election.id,
+    id: data.election._id,
     title: data.election.title,
     description: data.election.description,
     startDate: data.election.startDate,
     endDate: data.election.endDate,
     status: data.election.status,
     candidates: data.candidates.map((c: any) => ({
-      id: c.id,
+      id: c._id,
       name: c.name,
       party: c.party,
       description: c.description,
@@ -155,6 +154,7 @@ export default function ElectionPage({ params }: { params: { id: string } }) {
             key={candidate.id}
             candidate={candidate}
             electionId={election.id}
+            status={election.status}
           />
         ))}
       </div>
@@ -172,10 +172,13 @@ interface Candidate {
 function CandidateVoteCard({
   candidate,
   electionId,
+  status,
 }: {
   candidate: Candidate;
   electionId: string;
+  status: string;
 }) {
+  console.log(status);
   return (
     <Card className="overflow-hidden">
       <CardHeader>
@@ -188,14 +191,11 @@ function CandidateVoteCard({
         </p>
       </CardContent>
       <CardFooter className="flex gap-2">
-        {/* <Link href={`/candidates/${candidate.id}`} className="flex-1">
-          <Button variant="outline" className="w-full">
-            View Profile
-          </Button>
-        </Link> */}
-        {/* <Link href={`/vote/${electionId}/${candidate.id}`} className="flex-1">
-          <Button className="w-full">Vote</Button>
-        </Link> */}
+        {status === "active" && (
+          <Link href={`/vote/${electionId}/${candidate.id}`} className="flex-1">
+            <Button className="w-full">Vote</Button>
+          </Link>
+        )}
       </CardFooter>
     </Card>
   );

@@ -1,26 +1,33 @@
-import Image from "next/image"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { CheckCircle } from "lucide-react"
+import Image from "next/image";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle } from "lucide-react";
 
 interface Candidate {
-  id: string
-  name: string
-  party: string
-  position: string
-  votes: number
-  percentage: number
-  image: string
-  winner: boolean
+  id: string;
+  name: string;
+  party: string;
+  position: string;
+  votes: number;
+  percentage: number;
+  image: string;
+  winner: boolean;
 }
 
 interface ElectionResultsProps {
-  candidates: Candidate[]
+  candidates: Candidate[];
 }
 
 export function ElectionResults({ candidates }: ElectionResultsProps) {
   // Sort candidates by votes (highest first)
-  const sortedCandidates = [...candidates].sort((a, b) => b.votes - a.votes)
+  const sortedCandidates = [...candidates].sort((a, b) => b.votes - a.votes);
 
   return (
     <Table>
@@ -36,7 +43,10 @@ export function ElectionResults({ candidates }: ElectionResultsProps) {
       </TableHeader>
       <TableBody>
         {sortedCandidates.map((candidate, index) => (
-          <TableRow key={candidate.id} className={candidate.winner ? "bg-primary/5" : ""}>
+          <TableRow
+            key={candidate.id}
+            className={candidate.winner ? "bg-primary/5" : ""}
+          >
             <TableCell className="font-medium">{index + 1}</TableCell>
             <TableCell>
               <div className="flex items-center gap-2">
@@ -48,12 +58,18 @@ export function ElectionResults({ candidates }: ElectionResultsProps) {
                     className="object-cover"
                   />
                 </div>
-                <span className={candidate.winner ? "font-bold" : ""}>{candidate.name}</span>
+                <span className={candidate.winner ? "font-bold" : ""}>
+                  {candidate.name}
+                </span>
               </div>
             </TableCell>
             <TableCell>{candidate.party}</TableCell>
-            <TableCell className="text-right font-mono">{candidate.votes.toLocaleString()}</TableCell>
-            <TableCell className="text-right font-mono">{candidate.percentage.toFixed(1)}%</TableCell>
+            <TableCell className="text-right font-mono">
+              {candidate.votes.toLocaleString()}
+            </TableCell>
+            <TableCell className="text-right font-mono">
+              {candidate.percentage.toFixed(1)}%
+            </TableCell>
             <TableCell className="text-center">
               {candidate.winner ? (
                 <Badge className="bg-primary text-primary-foreground">
@@ -65,6 +81,5 @@ export function ElectionResults({ candidates }: ElectionResultsProps) {
         ))}
       </TableBody>
     </Table>
-  )
+  );
 }
-

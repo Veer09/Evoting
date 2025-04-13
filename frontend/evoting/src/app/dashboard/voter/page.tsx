@@ -25,19 +25,19 @@ interface Election {
   startDate: string;
   endDate: string;
   candidateCount: number;
-  id: string;
+  _id: string;
   status: "pending" | "active" | "completed";
 }
 
 export default function VoterDashboardPage() {
-  const [election, setElection] = useState<Election>();
+  const [election, setElection] = useState<Election[]>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchElections = async () => {
       try {
-        const response = await fetch("http://localhost:3000/currentElection", {
+        const response = await fetch("http://localhost:3000/elections", {
           method: "GET",
           credentials: "include",
           headers: {
@@ -50,7 +50,7 @@ export default function VoterDashboardPage() {
         }
 
         const data = await response.json();
-        setElection(data.election || []);
+        setElection(data.elections || []);
       } catch (err: any) {
         console.error("Error fetching elections:", err);
         setError(err.message);
@@ -94,40 +94,46 @@ export default function VoterDashboardPage() {
           </Alert>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {
-              <Card key={election.id}>
+            {election.map((election: Election) => (
+              <Card key={election._id}>
                 <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle>{election.title}</CardTitle>
-                      <CardDescription>{election.description}</CardDescription>
-                    </div>
-                    <Badge>Active</Badge>
-                  </div>
+                  <CardTitle>{election.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
+                  <CardDescription>{election.description}</CardDescription>
+                  <div className="grid grid-cols-2 gap-2">
                     <div className="flex items-center text-sm">
-                      <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
-                      <span>
-                        Ends: {new Date(election.endDate).toLocaleDateString()}
-                      </span>
+                      <CalendarDays className="h-4 w-4 mr-1 text-muted-foreground" />
+                      <span>Start Date: {formatDate(election.startDate)}</span>
                     </div>
                     <div className="flex items-center text-sm">
-                      <Users className="mr-2 h-4 w-4 text-muted-foreground" />
-                      <span>Candidates: {election.candidateCount}</span>
+                      <CalendarDays className="h-4 w-4 mr-1 text-muted-foreground" />
+                      <span>End Date: {formatDate(election.endDate)}</span>
                     </div>
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Link href={`/election/${election.id}`} className="w-full">
-                    <Button variant="default" className="w-full">
-                      Vote Now
-                    </Button>
-                  </Link>
+                  <div className="flex items-center justify-between w-full">
+                    <Badge variant="default">
+                      {election.status === "pending"
+                        ? "Pending"
+                        : election.status === "active"
+                        ? "Active"
+                        : "Completed"}
+                    </Badge>
+                    {election.status === "active" ? (
+                      <Link href={`/dashboard/voter/election/${election._id}`}>
+                        <Button variant="outline">Vote</Button>
+                      </Link>
+                    ) : (
+                      <Link href={`/dashboard/voter/election/${election._id}`}>
+                        <Button variant="outline">View Election</Button>
+                      </Link>
+                    )}
+                  </div>
                 </CardFooter>
               </Card>
-            }
+            ))}
           </div>
         )}
       </div>
