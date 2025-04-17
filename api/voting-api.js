@@ -134,6 +134,7 @@ app.post("/loginUser", async (req, res) => {
         affiliation: "",
         enrollmentID: voterId,
         role: "client",
+        attrs: [{ name: "role", value: "voter", ecert: true }],
       },
       adminUser
     );
@@ -157,7 +158,6 @@ app.post("/loginUser", async (req, res) => {
     const network = await gateway.getNetwork("mychannel");
     const contract = network.getContract("voting");
 
-    const response = await contract.submitTransaction("registerUser", voterId);
     console.log(response);
     const token = generateToken({ voterId });
     res.cookie("token", token, {
@@ -339,8 +339,11 @@ app.get("/auditElection/:id", async (req, res) => {
     const network = await gateway.getNetwork("mychannel");
     const contract = network.getContract("voting");
 
-    const response = await contract.submitTransaction("auditElection");
-
+    const response = await contract.submitTransaction(
+      "auditElection",
+      electionId
+    );
+    console.log(response);
     res.status(200).json({ message: response.toString() });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -621,13 +624,13 @@ app.post("/elections", async (req, res) => {
         .status(403)
         .json({ error: "Election committee member not found" });
     }
+
     const gateway = new Gateway();
     await gateway.connect(ccp2, {
       wallet,
-      identity: committeeIdentity,
+      identity: committeeMemberId,
       discovery: { enabled: true, asLocalhost: true },
     });
-
     const network = await gateway.getNetwork("mychannel");
     const contract = network.getContract("voting");
     const response = await contract.submitTransaction(
@@ -793,8 +796,11 @@ app.get("/results/:id", async (req, res) => {
     if (!identity) {
       return res.status(403).json({ error: "Identity not found" });
     }
-    const areas = await Candidate.find({ electionId: id }, { area: 1, _id: 0 });
-    const uniqueList = [...new Set(areas)];
+    const areas = await Candidate.find({ electionId: id }, { area: 1, _id: 1 });
+    const uniqueArea = areas.map((area) => area.area);
+    const uniqueList = [...new Set(uniqueArea)];
+    const candidates = areas.map((area) => area._id);
+
     const gateway = new Gateway();
     if (payload.voterId) {
       await gateway.connect(ccp, {
@@ -818,8 +824,9 @@ app.get("/results/:id", async (req, res) => {
   }
 });
 
-app.get("/getResultsByArea/:id", async (req, res) => {
+app.post("/getResultsByArea/:id", async (req, res) => {
   try {
+    console.log("here");
     const { area } = req.body;
     const { id } = req.params;
     const token = req.cookies.token;
@@ -853,10 +860,13 @@ app.get("/getResultsByArea/:id", async (req, res) => {
       { area, electionId: id },
       { _id: 1 }
     );
+    const candidateIds = candidates.map((candidate) => candidate._id);
+    console.log(candidateIds);
+
     const response = await contract.evaluateTransaction(
       "getResultsByArea",
       id,
-      candidates
+      JSON.stringify(candidateIds)
     );
     res.status(200).json({ results: JSON.parse(response) });
   } catch (err) {
@@ -987,9 +997,8 @@ app.post("/castVote", async (req, res) => {
     const userId = parseInt(voterId);
     const response = await contract.submitTransaction(
       "castVote",
-      userId,
-      candidateId,
-      electionId
+      electionId,
+      candidateId
     );
     console.log("after");
     res.status(200).json({ message: response.toString() });
