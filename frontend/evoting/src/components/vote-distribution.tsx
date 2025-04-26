@@ -80,7 +80,7 @@ export function VoteDistribution({ candidates }: VoteDistributionProps) {
       ctx.fillStyle = "#000000"
       ctx.font = "12px sans-serif"
       ctx.textAlign = "center"
-      ctx.fillText(`${candidate.percentage.toFixed(1)}%`, x + barWidth / 2, y - 10)
+      // ctx.fillText(`${candidate.percentage.toFixed(1)}%`, x + barWidth / 2, y - 10)
 
       // Draw candidate name below bar
       ctx.fillStyle = "#6b7280"

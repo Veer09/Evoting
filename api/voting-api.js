@@ -60,28 +60,13 @@ app.get("/verifyToken", (req, res) => {
     }
 
     const payload = verifyToken(token);
-    console.log(payload);
 
-    let userType = null;
-    let userId = null;
-
-    if (payload.voterId) {
-      userType = "voter";
-      userId = payload.voterId;
-    } else if (payload.committeeMemberId) {
-      userType = "electionCommittee";
-      userId = payload.committeeMemberId;
-    }
-
-    if (!userType) {
+    if (!payload.role) {
       return res.status(401).json({ error: "Invalid token" });
     }
 
     res.status(200).json({
-      user: {
-        id: userId,
-        role: userType,
-      },
+      user: payload,
     });
   } catch (err) {
     res.status(401).json({ error: "Invalid token" });
@@ -107,7 +92,7 @@ app.post("/loginUser", async (req, res) => {
     const voterExists = await wallet.get(voterId);
 
     if (voterExists) {
-      const token = generateToken({ voterId });
+      const token = generateToken({ id: voterId, role: "voter" });
       res.cookie("token", token, {
         maxAge: 24 * 60 * 60 * 1000,
         httpOnly: true,
@@ -159,7 +144,7 @@ app.post("/loginUser", async (req, res) => {
     const contract = network.getContract("voting");
 
     console.log(response);
-    const token = generateToken({ voterId });
+    const token = generateToken({ id: voterId, role: "voter" });
     res.cookie("token", token, {
       maxAge: 24 * 60 * 60 * 1000,
       httpOnly: true,
@@ -373,7 +358,10 @@ app.post("/loginElectionCommittee", async (req, res) => {
 
     const memberExists = await wallet.get(committeeMemberId);
     if (memberExists) {
-      const token = generateToken({ committeeMemberId });
+      const token = generateToken({
+        id: committeeMemberId,
+        role: "electionCommittee",
+      });
       res.cookie("token", token, {
         maxAge: 24 * 60 * 60 * 1000,
         httpOnly: true,
@@ -425,7 +413,10 @@ app.post("/loginElectionCommittee", async (req, res) => {
     };
 
     await wallet.put(committeeMemberId, userIdentity);
-    const token = generateToken({ committeeMemberId });
+    const token = generateToken({
+      id: committeeMemberId,
+      role: "electionCommittee",
+    });
 
     res.cookie("token", token, {
       maxAge: 24 * 60 * 60 * 1000,
@@ -868,7 +859,20 @@ app.post("/getResultsByArea/:id", async (req, res) => {
       id,
       JSON.stringify(candidateIds)
     );
-    res.status(200).json({ results: JSON.parse(response) });
+    const responseParsed = JSON.parse(response);
+    let candidatesList = [];
+    for (let key in responseParsed) {
+      const candidate = await Candidate.findById(key);
+      if (candidate) {
+        candidatesList.push({
+          id: candidate._id,
+          name: candidate.name,
+          party: candidate.party,
+          votes: responseParsed[key],
+        });
+      }
+    }
+    res.status(200).json({ results: candidatesList });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

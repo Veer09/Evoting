@@ -68,7 +68,7 @@ export function ElectionResults({ candidates }: ElectionResultsProps) {
               {candidate.votes.toLocaleString()}
             </TableCell>
             <TableCell className="text-right font-mono">
-              {candidate.percentage.toFixed(1)}%
+              {/* {candidate.percentage.toFixed(1)}% */}
             </TableCell>
             <TableCell className="text-center">
               {candidate.winner ? (

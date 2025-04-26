@@ -1,7 +1,13 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Vote, Users, Award, ShieldCheck } from "lucide-react"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Vote, Users, Award, ShieldCheck } from "lucide-react";
+import Nav from "@/components/nav";
 
 export default function Home() {
   return (
@@ -12,14 +18,7 @@ export default function Home() {
             <Vote className="h-6 w-6" />
             <span className="text-xl font-bold">EVote</span>
           </div>
-          <nav className="flex items-center gap-4">
-            <Link href="/login/voter">
-              <Button variant="ghost">Voter Login</Button>
-            </Link>
-            <Link href="/login/committee">
-              <Button variant="ghost">Committee Login</Button>
-            </Link>
-          </nav>
+          <Nav />
         </div>
       </header>
       <main className="flex-1">
@@ -31,7 +30,8 @@ export default function Home() {
                   Secure Decentralized E-Voting
                 </h1>
                 <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
-                  A blockchain-based voting system ensuring transparency, security, and trust in the electoral process.
+                  A blockchain-based voting system ensuring transparency,
+                  security, and trust in the electoral process.
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-4">
@@ -50,7 +50,8 @@ export default function Home() {
                   <ShieldCheck className="h-10 w-10 mb-2 text-primary" />
                   <CardTitle>Secure & Transparent</CardTitle>
                   <CardDescription>
-                    Blockchain technology ensures tamper-proof voting records and complete transparency.
+                    Blockchain technology ensures tamper-proof voting records
+                    and complete transparency.
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -59,7 +60,8 @@ export default function Home() {
                   <Users className="h-10 w-10 mb-2 text-primary" />
                   <CardTitle>Accessible Voting</CardTitle>
                   <CardDescription>
-                    Vote from anywhere with internet access while maintaining security and privacy.
+                    Vote from anywhere with internet access while maintaining
+                    security and privacy.
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -68,7 +70,8 @@ export default function Home() {
                   <Award className="h-10 w-10 mb-2 text-primary" />
                   <CardTitle>Verifiable Results</CardTitle>
                   <CardDescription>
-                    Instantly verify election results with cryptographic proof of vote integrity.
+                    Instantly verify election results with cryptographic proof
+                    of vote integrity.
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -82,16 +85,21 @@ export default function Home() {
             &copy; {new Date().getFullYear()} EVote. All rights reserved.
           </p>
           <div className="flex gap-4">
-            <Link href="/terms" className="text-sm text-muted-foreground underline-offset-4 hover:underline">
+            <Link
+              href="/terms"
+              className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+            >
               Terms
             </Link>
-            <Link href="/privacy" className="text-sm text-muted-foreground underline-offset-4 hover:underline">
+            <Link
+              href="/privacy"
+              className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+            >
               Privacy
             </Link>
           </div>
         </div>
       </footer>
     </div>
-  )
+  );
 }
-
